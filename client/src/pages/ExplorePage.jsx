@@ -3,7 +3,10 @@ import MapView from "../components/MapView";
 import DestinationSidebar from "../components/DestinationSidebar";
 import RoutesSidebar from "../components/RoutesSidebar";
 import axios from "axios";
-import { startTranslating, stopTranslating } from "../store/translationSlice/translationSlice"
+import {
+  startTranslating,
+  stopTranslating,
+} from "../store/translationSlice/translationSlice";
 import {
   Tooltip,
   Dialog,
@@ -39,7 +42,9 @@ export default function ExplorePage() {
 
   const dispatch = useDispatch();
   const language = useSelector((state) => state.language.selectedLanguage);
-  const translatingCount = useSelector((state) => state.translation.translatingCount);
+  const translatingCount = useSelector(
+    (state) => state.translation.translatingCount
+  );
   const isTranslating = translatingCount > 0;
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -54,17 +59,16 @@ export default function ExplorePage() {
     currentLocationSet: "Current Location Set",
     fetchingLocation: "Fetching current location...",
     fetchingPath: "Fetching current path...",
-    translatingContent: "Translating content..."
+    translatingContent: "Translating content...",
   });
-
 
   const translateText = async (text, targetLang) => {
     try {
-      const res = await axios.get('http://localhost:5001/api/translate', {
+      const res = await axios.get("http://localhost:5001/api/translate", {
         params: {
           q: text,
-          targetLang: targetLang
-        }
+          targetLang: targetLang,
+        },
       });
 
       return res.data.translatedText;
@@ -81,6 +85,18 @@ export default function ExplorePage() {
       if (language === "en") {
         setTouristSpots(originalTouristSpots);
         setAllSpots(originalAllSpots);
+
+        setTexts({
+          useCurrent: "Use Current Location",
+          findPath: "Find Path",
+          locationInfo: "Location Info",
+          closeSidebar: "Close Destinations Sidebar",
+          openSidebar: "Open Destinations Sidebar",
+          currentLocationSet: "Current Location Set",
+          fetchingLocation: "Fetching current location...",
+          fetchingPath: "Fetching current path...",
+          translatingContent: "Translating content...",
+        });
         return;
       }
 
@@ -126,9 +142,20 @@ export default function ExplorePage() {
           }))
         );
         setAllSpots(translatedAllSpots);
-
       } catch (err) {
         console.error("Translation failed", err);
+
+        setTexts({
+          useCurrent: "Use Current Location",
+          findPath: "Find Path",
+          locationInfo: "Location Info",
+          closeSidebar: "Close Destinations Sidebar",
+          openSidebar: "Open Destinations Sidebar",
+          currentLocationSet: "Current Location Set",
+          fetchingLocation: "Fetching current location...",
+          fetchingPath: "Fetching current path...",
+          translatingContent: "Translating content...",
+        });
       } finally {
         dispatch(stopTranslating());
       }
@@ -136,8 +163,6 @@ export default function ExplorePage() {
 
     doTranslation();
   }, [language, touristSpots.length, allSpots.length]);
-
-
 
   useEffect(() => {
     setRoutes([]);
@@ -311,10 +336,11 @@ export default function ExplorePage() {
         <Tooltip title={isSidebarOpen ? texts.closeSidebar : texts.openSidebar}>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className={`bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg rounded-full w-12 h-12 flex items-center justify-center transition-all duration-300 absolute bottom-0 ${isSidebarOpen
-              ? "left-[23rem] -translate-x-6"
-              : "left-0 translate-x-6"
-              }`}
+            className={`bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg rounded-full w-12 h-12 flex items-center justify-center transition-all duration-300 absolute bottom-0 ${
+              isSidebarOpen
+                ? "left-[23rem] -translate-x-6"
+                : "left-0 translate-x-6"
+            }`}
           >
             {isSidebarOpen ? <CloseIcon /> : <MenuIcon />}
           </button>
@@ -376,7 +402,12 @@ export default function ExplorePage() {
 
       <Backdrop
         open={isFetchingLocation || isFetchingPath || isTranslating}
-        sx={{ color: "#fff", zIndex: 1200, flexDirection: "column", backdropFilter: "blur(5px)" }}
+        sx={{
+          color: "#fff",
+          zIndex: 1200,
+          flexDirection: "column",
+          backdropFilter: "blur(5px)",
+        }}
       >
         <CircularProgress color="inherit" />
         <Box mt={2}>
@@ -384,12 +415,11 @@ export default function ExplorePage() {
             {isFetchingLocation
               ? texts.fetchingLocation
               : isFetchingPath
-                ? texts.fetchingPath
-                : texts.translatingContent}
+              ? texts.fetchingPath
+              : texts.translatingContent}
           </Typography>
         </Box>
       </Backdrop>
-
     </div>
   );
 }

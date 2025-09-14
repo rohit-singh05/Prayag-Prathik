@@ -15,7 +15,10 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
-import { startTranslating, stopTranslating } from "../store/translationSlice/translationSlice"
+import {
+  startTranslating,
+  stopTranslating,
+} from "../store/translationSlice/translationSlice";
 
 export default function DestinationSidebar({
   isSidebarOpen,
@@ -40,18 +43,17 @@ export default function DestinationSidebar({
 
   const filteredDestinations = predefinedDestinations
     .filter((dest) =>
-      (dest.translatedName || dest.name).toLowerCase().includes(searchQuery.toLowerCase())
+      (dest.translatedName || dest.name)
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
     )
     .sort((a, b) =>
       (a.translatedName || a.name).localeCompare(b.translatedName || b.name)
     );
 
-  const sortedStarts = predefinedStarts
-    .sort((a, b) =>
-      (a.translatedName || a.name).localeCompare(b.translatedName || b.name)
-    );
-
-
+  const sortedStarts = predefinedStarts.sort((a, b) =>
+    (a.translatedName || a.name).localeCompare(b.translatedName || b.name)
+  );
 
   const translateText = async (text, targetLang) => {
     try {
@@ -109,7 +111,7 @@ export default function DestinationSidebar({
           ];
 
           const translations = await Promise.all(
-            keys.map(item => translateText(item.text, language))
+            keys.map((item) => translateText(item.text, language))
           );
 
           const newTexts = {};
@@ -142,7 +144,6 @@ export default function DestinationSidebar({
 
     doTranslation();
   }, [language]);
-
 
   return (
     <aside
@@ -179,10 +180,11 @@ export default function DestinationSidebar({
 
           <div
             className={`transition-all duration-300 ease-in-out overflow-hidden
-                            ${isDestinationsOpen
-                ? "max-h-[400px] opacity-100"
-                : "max-h-0 opacity-0"
-              }`}
+                            ${
+                              isDestinationsOpen
+                                ? "max-h-[400px] opacity-100"
+                                : "max-h-0 opacity-0"
+                            }`}
           >
             <div className="sticky top-0 bg-white/95 pb-3 z-10">
               <div className="relative">
@@ -200,22 +202,25 @@ export default function DestinationSidebar({
             <div className="flex-1 overflow-y-auto pr-1 space-y-3 mt-2 h-72">
               {filteredDestinations.length > 0 ? (
                 filteredDestinations.map((dest) => {
-                  const translatedDest = predefinedDestinations.find(d => d.id === dest.id) || dest;
+                  const translatedDest =
+                    predefinedDestinations.find((d) => d.id === dest.id) ||
+                    dest;
                   return (
                     <div
                       key={dest.id}
                       className={`flex items-center gap-3 px-3 py-3 rounded-xl border shadow-sm transition cursor-pointer
-                                            ${Array.isArray(
-                        selectedDestination
-                      ) &&
-                          selectedDestination.some(
-                            (d) =>
-                              d.lat === dest.lat &&
-                              d.lng === dest.lng
-                          )
-                          ? "bg-emerald-50 border-emerald-300"
-                          : "bg-white hover:bg-neutral-50 border-neutral-200"
-                        }`}
+                                            ${
+                                              Array.isArray(
+                                                selectedDestination
+                                              ) &&
+                                              selectedDestination.some(
+                                                (d) =>
+                                                  d.lat === dest.lat &&
+                                                  d.lng === dest.lng
+                                              )
+                                                ? "bg-emerald-50 border-emerald-300"
+                                                : "bg-white hover:bg-neutral-50 border-neutral-200"
+                                            }`}
                       onClick={() => {
                         if (
                           Array.isArray(selectedDestination) &&
@@ -248,8 +253,11 @@ export default function DestinationSidebar({
                         className="w-4 h-4 accent-emerald-600"
                       />
                       <MapPin className="w-4 h-4 text-emerald-600" />
-                      <span className="truncate font-medium">{translatedDest.translatedName || translatedDest.name}</span>
-                    </div>)
+                      <span className="truncate font-medium">
+                        {translatedDest.translatedName || translatedDest.name}
+                      </span>
+                    </div>
+                  );
                 })
               ) : (
                 <p className="text-xs text-neutral-400 px-2">
@@ -319,7 +327,7 @@ export default function DestinationSidebar({
                   disableSticky
                   className="px-3 py-1 text-xs text-neutral-500"
                 >
-                  Start Here
+                  {texts.startHere}
                 </ListSubheader>
                 <MenuItem
                   value="current-location"
@@ -351,10 +359,11 @@ export default function DestinationSidebar({
                   disableSticky
                   className="px-3 py-1 text-xs text-neutral-500"
                 >
-                  Saved Spots
+                  {texts.savedSpots}
                 </ListSubheader>
                 {sortedStarts.map((place) => {
-                  const translatedPlace = predefinedStarts.find(s => s.id === place.id) || place;
+                  const translatedPlace =
+                    predefinedStarts.find((s) => s.id === place.id) || place;
                   return (
                     <MenuItem
                       key={place.id}
@@ -374,7 +383,8 @@ export default function DestinationSidebar({
                       }}
                     >
                       {translatedPlace.translatedName || translatedPlace.name}
-                    </MenuItem>)
+                    </MenuItem>
+                  );
                 })}
               </Select>
             </FormControl>
@@ -387,10 +397,11 @@ export default function DestinationSidebar({
           onClick={handleFindPath}
           disabled={!selectedDestination || !userLocation || pathLoading}
           className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-200
-                        ${selectedDestination && userLocation && !pathLoading
-              ? "bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg"
-              : "bg-neutral-200 text-neutral-500 cursor-not-allowed"
-            }`}
+                        ${
+                          selectedDestination && userLocation && !pathLoading
+                            ? "bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg"
+                            : "bg-neutral-200 text-neutral-500 cursor-not-allowed"
+                        }`}
         >
           {pathLoading ? `${texts.findingPath}` : `🌿 ${texts.findPath}`}
         </button>
