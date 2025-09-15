@@ -1,9 +1,9 @@
 const { planDay } = require("../services/dayPlanner");
-const Stop = require("../models/stopModel"); // assuming you have a Stop model
+const Stop = require("../models/stopModel");
 
 const getAllSpots = async (req, res) => {
     try {
-        const spots = await Stop.find({}); // no filter = all documents
+        const spots = await Stop.find({});
 
         res.status(200).json({
             success: true,
@@ -37,7 +37,6 @@ const getAllTouristSpots = async (req, res) => {
 const calculateRoute = async (req, res) => {
     const { startLat, startLng, destinations } = req.body;
 
-    // destinations should be an array of objects: [{ id, lat, lng }, ...]
     if (
         typeof startLat !== "number" ||
         typeof startLng !== "number" ||
@@ -56,13 +55,11 @@ const calculateRoute = async (req, res) => {
     }
 
     try {
-        // fetch all stops from DB
         const allStops = await Stop.find({});
 
-        // helper to calculate haversine distance
         const haversine = (lat1, lon1, lat2, lon2) => {
             const toRad = (x) => (x * Math.PI) / 180;
-            const R = 6371; // Earth radius km
+            const R = 6371;
             const dLat = toRad(lat2 - lat1);
             const dLon = toRad(lon2 - lon1);
             const a =
@@ -75,7 +72,6 @@ const calculateRoute = async (req, res) => {
             return R * c;
         };
 
-        // find nearest stop
         let nearestStop = null;
         let minDist = Infinity;
         for (const stop of allStops) {
@@ -95,10 +91,8 @@ const calculateRoute = async (req, res) => {
             return res.status(404).json({ message: "No nearby stops found." });
         }
 
-        // get only destination IDs (tourist spots)
         const destinationIds = destinations.map((d) => d.id);
 
-        // run planner starting from nearest stop
         const result = await planDay(nearestStop._id.toString(), destinationIds, "10:00");
 
         res.status(200).json({
@@ -108,7 +102,7 @@ const calculateRoute = async (req, res) => {
                 name: nearestStop.name,
                 distanceFromUserKm: minDist.toFixed(2)
             },
-            ...result, // { plan, totalCost, days }
+            ...result,
         });
     } catch (error) {
         console.error("Routing Controller Error:", error);
