@@ -12,7 +12,7 @@ const stopSchema = new mongoose.Schema({
             default: 'Point'
         },
         coordinates: {
-            type: [Number], // [lng, lat]
+            type: [Number], 
             required: true,
             index: '2dsphere'
         }
