@@ -152,7 +152,7 @@ export default function HomePage() {
         </h1>
         <p className="text-sm text-gray-600">{texts.description}</p>
         <button
-          onClick={() => navigate("/explore")}
+          onClick={() => navigate("/packages")}
           className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-full shadow-sm transition-transform transform hover:scale-105 border border-emerald-300"
         >
           {texts.button}

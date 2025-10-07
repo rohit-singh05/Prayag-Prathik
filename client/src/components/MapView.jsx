@@ -16,7 +16,7 @@ export default function MapView({
   destinations,
   activeStep,
   setActiveStep,
-  selectedStart, // Added to detect selection before path is found
+  selectedStart,
 }) {
   const prayagrajCenter = [25.4358, 81.8463];
   const [routeSegments, setRouteSegments] = useState([]);
