@@ -3,11 +3,11 @@ const mongoose = require('mongoose');
 const routeSchema = new mongoose.Schema({
     from: { type: mongoose.Schema.Types.ObjectId, ref: 'Stop', required: true },
     to: { type: mongoose.Schema.Types.ObjectId, ref: 'Stop', required: true },
-    time: { type: Number, required: true },  // minutes
-    cost: { type: Number, required: true },  // fare in INR
+    time: { type: Number, required: true }, 
+    cost: { type: Number, required: true },
     edgeType: {
         type: String,
-        enum: ['bus', 'auto'],  // what kind of connection
+        enum: ['bus', 'auto'],
         required: true
     }
 });
