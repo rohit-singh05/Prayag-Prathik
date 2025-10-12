@@ -22,6 +22,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setLanguage } from "../store/languageSlice/languageSlice";
+import { useLocation } from "react-router-dom";
 
 export default function ExplorePage() {
   const [userLocation, setUserLocation] = useState(null);
@@ -47,8 +48,37 @@ export default function ExplorePage() {
   );
   const isTranslating = translatingCount > 0;
 
+  const location = useLocation();
+  const selectedPackage = location.state?.selectedPackage;
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
+
+  useEffect(() => {
+    if (!selectedPackage || !allSpots.length) return;
+
+    const startSpot = allSpots.find(
+      (s) =>
+        s.name.includes("Prayagraj Railway Junction Gate Number 5")
+    );
+
+    if (startSpot) {
+      setSelectedStart(startSpot.id);
+      setUserLocation({ lat: startSpot.lat, lng: startSpot.lng });
+    }
+
+    const matchedDestinations = allSpots.filter((spot) =>
+      selectedPackage.locations.some((loc) =>
+        spot.name.toLowerCase().includes(loc.toLowerCase())
+      )
+    );
+
+    if (matchedDestinations.length > 0) {
+      setSelectedDestination(matchedDestinations);
+    }
+
+    handleFindPath();
+  }, [selectedPackage, allSpots]);
 
   const [texts, setTexts] = useState({
     useCurrent: "Use Current Location",
@@ -336,11 +366,10 @@ export default function ExplorePage() {
         <Tooltip title={isSidebarOpen ? texts.closeSidebar : texts.openSidebar}>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className={`bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg rounded-full w-12 h-12 flex items-center justify-center transition-all duration-300 absolute bottom-0 ${
-              isSidebarOpen
-                ? "left-[23rem] -translate-x-6"
-                : "left-0 translate-x-6"
-            }`}
+            className={`bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg rounded-full w-12 h-12 flex items-center justify-center transition-all duration-300 absolute bottom-0 ${isSidebarOpen
+              ? "left-[23rem] -translate-x-6"
+              : "left-0 translate-x-6"
+              }`}
           >
             {isSidebarOpen ? <CloseIcon /> : <MenuIcon />}
           </button>
@@ -415,8 +444,8 @@ export default function ExplorePage() {
             {isFetchingLocation
               ? texts.fetchingLocation
               : isFetchingPath
-              ? texts.fetchingPath
-              : texts.translatingContent}
+                ? texts.fetchingPath
+                : texts.translatingContent}
           </Typography>
         </Box>
       </Backdrop>
