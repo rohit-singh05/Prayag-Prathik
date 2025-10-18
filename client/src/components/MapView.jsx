@@ -5,10 +5,12 @@ import {
   Marker,
   Polyline,
   Popup,
+  useMap
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import axios from "axios";
+import MapWithHoverBoxes from "./MapWithHoverBox";
 
 export default function MapView({
   userLocation,
@@ -87,26 +89,6 @@ export default function MapView({
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-      {/* Show Start Stop if path is found */}
-      {startStop && (
-        <Marker
-          position={[
-            startStop.location?.coordinates
-              ? startStop.location.coordinates[1]
-              : routes[0].plan[0].travel.from.location.coordinates[1],
-            startStop.location?.coordinates
-              ? startStop.location.coordinates[0]
-              : routes[0].plan[0].travel.from.location.coordinates[0],
-          ]}
-          icon={L.icon({
-            iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-            iconSize: [30, 30],
-          })}
-        >
-          <Popup>{startStop.name}</Popup>
-        </Marker>
-      )}
-
       {/* Show selected start if path not found */}
       {!hasPath && selectedStart && (
         <Marker
@@ -133,21 +115,6 @@ export default function MapView({
         </Marker>
       )}
 
-      {/* Destinations (Green Markers) */}
-      {Array.isArray(destinations) &&
-        destinations.map((dest, idx) => (
-          <Marker
-            key={dest.id || idx}
-            position={[dest.lat, dest.lng]}
-            icon={L.icon({
-              iconUrl:
-                "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
-              iconSize: [30, 30],
-            })}
-          >
-            <Popup>{dest.name}</Popup>
-          </Marker>
-        ))}
 
       {/* Draw Segmented Routes with click handler */}
       {routeSegments.map((segment, idx) => (
@@ -175,21 +142,18 @@ export default function MapView({
               icon={L.divIcon({
                 className: "custom-stop-marker",
                 html: `<div style="
-                                    background:${
-                                      activeStep === idx ? "#2563eb" : "#fff"
-                                    };
-                                    border:2px solid ${
-                                      activeStep === idx ? "#2563eb" : "#333"
-                                    };
+                                    background:${activeStep === idx ? "#2563eb" : "#fff"
+                  };
+                                    border:2px solid ${activeStep === idx ? "#2563eb" : "#333"
+                  };
                                     border-radius:50%;
                                     width:22px;height:22px;
                                     line-height:22px;
                                     text-align:center;
                                     font-size:12px;
                                     font-weight:bold;
-                                    color:${
-                                      activeStep === idx ? "#fff" : "#000"
-                                    };
+                                    color:${activeStep === idx ? "#fff" : "#000"
+                  };
                                 ">${idx + 1}</div>`,
               })}
               eventHandlers={{
@@ -200,6 +164,9 @@ export default function MapView({
             </Marker>
           );
         })}
+
+      <MapWithHoverBoxes destinations={destinations}
+      selectedStart={selectedStart}/>
     </MapContainer>
   );
 }

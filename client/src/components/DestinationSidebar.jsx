@@ -367,7 +367,7 @@ export default function DestinationSidebar({
                   return (
                     <MenuItem
                       key={place.id}
-                      value={place.id}
+                      value={place}
                       sx={{
                         fontSize: "0.9rem",
                         borderRadius: "12px",
