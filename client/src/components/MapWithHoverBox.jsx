@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useMap, Marker } from "react-leaflet";
 import L from "leaflet";
+import { useNavigate } from "react-router-dom";
 
 function HoverInfoBox({ destination, map, onMouseEnter, onMouseLeave }) {
+    const navigate = useNavigate();
+    console.log(destination)
     const [position, setPosition] = useState(null);
 
     useEffect(() => {
@@ -12,6 +15,7 @@ function HoverInfoBox({ destination, map, onMouseEnter, onMouseLeave }) {
     }, [destination, map]);
 
     if (!position) return null;
+
 
     // 🕒 Today’s visiting time
     const today = new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
@@ -68,7 +72,8 @@ function HoverInfoBox({ destination, map, onMouseEnter, onMouseLeave }) {
                 </p>
             )}
             <button
-                onClick={() => alert(`Viewing details for ${destination.name}`)}
+                onClick={() => navigate(`/place/${destination.id || destination._id}`)}
+                // onClick={() => console.log(destination)}
                 style={{
                     background: "#2563eb",
                     color: "white",
