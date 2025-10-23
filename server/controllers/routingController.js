@@ -19,6 +19,39 @@ const getAllSpots = async (req, res) => {
     }
 };
 
+const getSpotInfo = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                message: "Spot ID is required",
+            });
+        }
+
+        const spot = await Stop.findById(id);
+
+        if (!spot) {
+            return res.status(404).json({
+                success: false,
+                message: "Spot not found",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            spot,
+        });
+    } catch (error) {
+        console.error("Error fetching spot info:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error fetching spot info",
+        });
+    }
+};
+
 const getAllTouristSpots = async (req, res) => {
     try {
         const spots = await Stop.find({ type: "tourist_spot" });
@@ -112,4 +145,4 @@ const calculateRoute = async (req, res) => {
     }
 };
 
-module.exports = { calculateRoute, getAllTouristSpots ,getAllSpots };
+module.exports = { calculateRoute, getAllTouristSpots, getAllSpots, getSpotInfo };

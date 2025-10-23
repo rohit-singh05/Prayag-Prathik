@@ -124,7 +124,7 @@ const PackagesPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
             >
-                Explore Prayagraj Packages
+                Explore Prayagraj
             </motion.h1>
 
             <motion.div

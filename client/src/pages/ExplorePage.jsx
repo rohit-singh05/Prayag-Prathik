@@ -63,7 +63,7 @@ export default function ExplorePage() {
     );
 
     if (startSpot) {
-      setSelectedStart(startSpot.id);
+      setSelectedStart(startSpot);
       setUserLocation({ lat: startSpot.lat, lng: startSpot.lng });
     }
 
@@ -209,6 +209,9 @@ export default function ExplorePage() {
           name: s.name,
           lat: s.location.coordinates[1],
           lng: s.location.coordinates[0],
+          description: s.description,
+          image: s.image,
+          time: s.time
         }));
         setTouristSpots(spots);
         setOriginalTouristSpots(spots);
@@ -227,6 +230,9 @@ export default function ExplorePage() {
           name: s.name,
           lat: s.location.coordinates[1],
           lng: s.location.coordinates[0],
+          description: s.description,
+          image: s.image,
+          time: s.time
         }));
         setAllSpots(spots);
         setOriginalAllSpots(spots);
@@ -384,6 +390,7 @@ export default function ExplorePage() {
           setActiveStep={setActiveStep}
           zoomLevel={zoomLevel}
           routes={routes}
+          selectedStart={selectedStart}
         />
       </main>
 
@@ -393,6 +400,7 @@ export default function ExplorePage() {
         routes={routes}
         activeStep={activeStep}
         setActiveStep={setActiveStep}
+        selectedStart={selectedStart}
       />
 
       <Dialog
