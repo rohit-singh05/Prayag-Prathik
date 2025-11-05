@@ -11,21 +11,63 @@ import {
     CardContent,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { WiDaySunny, WiCloudy, WiRain, WiThunderstorm, WiSnow } from "react-icons/wi";
+import {
+    WiDaySunny,
+    WiCloudy,
+    WiRain,
+    WiThunderstorm,
+    WiSnow,
+} from "react-icons/wi";
+import { useSelector, useDispatch } from "react-redux";
+import {
+    startTranslating,
+    stopTranslating,
+} from "../store/translationSlice/translationSlice";
 
 export default function PlaceDetails() {
     const { id } = useParams();
     const [place, setPlace] = useState(null);
     const [loading, setLoading] = useState(true);
     const [weather, setWeather] = useState(null);
+    const [translatedPlace, setTranslatedPlace] = useState(null);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const language = useSelector((state) => state.language.selectedLanguage);
 
     const OPENWEATHER_API_KEY = "f3fd35b926c7b3d9f36db91f05aa3e96";
 
+    // ✅ Safe translator with chunking (prevents “Query Length Exceeded”)
+    const translateText = async (text, targetLang) => {
+        if (!text || targetLang === "en") return text;
+        const MAX_CHUNK = 400;
+        const chunks = [];
+        for (let i = 0; i < text.length; i += MAX_CHUNK) {
+            chunks.push(text.slice(i, i + MAX_CHUNK));
+        }
+
+        try {
+            const results = await Promise.all(
+                chunks.map(async (chunk) => {
+                    const res = await axios.get("http://localhost:5001/api/translate", {
+                        params: { q: chunk, targetLang },
+                    });
+                    return res.data.translatedText;
+                })
+            );
+            return results.join("");
+        } catch (err) {
+            console.error("Translation error:", err);
+            return text;
+        }
+    };
+
+    // 🗺️ Fetch place & weather
     useEffect(() => {
         const fetchPlace = async () => {
             try {
-                const res = await axios.get(`http://localhost:5001/api/routes/spot/${id}`);
+                const res = await axios.get(
+                    `http://localhost:5001/api/routes/spot/${id}`
+                );
                 const spot = res.data.spot;
                 setPlace(spot);
 
@@ -42,9 +84,91 @@ export default function PlaceDetails() {
                 setLoading(false);
             }
         };
-
         fetchPlace();
     }, [id]);
+
+    // 🌐 Translate all texts & numbers
+    useEffect(() => {
+        const translateEverything = async () => {
+            if (!place) return;
+
+            if (language === "en") {
+                setTranslatedPlace(place);
+                return;
+            }
+
+            dispatch(startTranslating());
+            try {
+                // Combine texts into one string separated by "||"
+                const allTexts = [
+                    place.name,
+                    place.description || "",
+                    "🕒 Visiting Hours (Weekly)",
+                    "🌦️ Current Weather",
+                    "Humidity",
+                    "Wind",
+                    ...(place.time ? Object.keys(place.time) : []),
+                    ...(place.time ? Object.values(place.time) : []),
+                    weather?.weather?.[0]?.description || "",
+                    weather?.weather?.[0]?.main || "",
+                ].join("||");
+
+                const translatedAll = await translateText(allTexts, language);
+                const parts = translatedAll.split("||");
+
+                const [
+                    tName,
+                    tDesc,
+                    tVisitingHours,
+                    tWeatherTitle,
+                    tHumidity,
+                    tWind,
+                    ...rest
+                ] = parts;
+
+                const dayCount = place.time ? Object.keys(place.time).length : 0;
+                const tDays = rest.slice(0, dayCount);
+                const tTimes = rest.slice(dayCount, 2 * dayCount);
+                const tWeatherDesc = rest[2 * dayCount];
+                const tWeatherMain = rest[2 * dayCount + 1];
+
+                // Localize numbers to the selected language
+                const localizeNumbers = (text) =>
+                    text?.replace(/\d+(\.\d+)?/g, (num) =>
+                        new Intl.NumberFormat(language).format(num)
+                    );
+
+                setTranslatedPlace({
+                    ...place,
+                    name: tName || place.name,
+                    description: localizeNumbers(tDesc || place.description),
+                    visitingHoursLabel: tVisitingHours || "🕒 Visiting Hours (Weekly)",
+                    weatherLabel: tWeatherTitle || "🌦️ Current Weather",
+                    humidityLabel: tHumidity || "Humidity",
+                    windLabel: tWind || "Wind",
+                    translatedTime:
+                        place.time &&
+                        Object.fromEntries(
+                            Object.keys(place.time).map((day, index) => [
+                                tDays[index] || day,
+                                tTimes[index] || place.time[day],
+                            ])
+                        ),
+                    translatedWeather: {
+                        description: tWeatherDesc || weather?.weather?.[0]?.description,
+                        main: tWeatherMain || weather?.weather?.[0]?.main,
+                    },
+                });
+            } catch (err) {
+                console.error("Translation failed:", err);
+                setTranslatedPlace(place);
+            } finally {
+                dispatch(stopTranslating());
+            }
+        };
+
+        translateEverything();
+    }, [language, place, weather, dispatch]);
 
     if (loading)
         return (
@@ -60,6 +184,8 @@ export default function PlaceDetails() {
             </Box>
         );
 
+    const display = translatedPlace || place;
+
     const getWeatherIcon = (main) => {
         switch (main?.toLowerCase()) {
             case "clear":
@@ -74,6 +200,14 @@ export default function PlaceDetails() {
                 return <WiSnow size={60} color="#e0f2fe" />;
             default:
                 return <WiCloudy size={60} color="#93c5fd" />;
+        }
+    };
+
+    const localizeNumber = (num) => {
+        try {
+            return new Intl.NumberFormat(language).format(num);
+        } catch {
+            return num;
         }
     };
 
@@ -114,7 +248,7 @@ export default function PlaceDetails() {
                             textTransform: "capitalize",
                         }}
                     >
-                        {place.name}
+                        {display.name}
                     </Typography>
 
                     <Box
@@ -124,14 +258,14 @@ export default function PlaceDetails() {
                             gap: 4,
                         }}
                     >
-                        {/* Left Column: Image + Description */}
+                        {/* Left Column */}
                         <Box sx={{ flex: 1 }}>
-                            {place.image && (
+                            {display.image && (
                                 <CardMedia
                                     component="img"
                                     height="350"
-                                    image={place.image}
-                                    alt={place.name}
+                                    image={display.image}
+                                    alt={display.name}
                                     sx={{
                                         objectFit: "cover",
                                         borderRadius: "16px",
@@ -139,7 +273,7 @@ export default function PlaceDetails() {
                                     }}
                                 />
                             )}
-                            {place.description && (
+                            {display.description && (
                                 <Typography
                                     variant="body1"
                                     sx={{
@@ -149,14 +283,14 @@ export default function PlaceDetails() {
                                         textAlign: "justify",
                                     }}
                                 >
-                                    {place.description}
+                                    {display.description}
                                 </Typography>
                             )}
                         </Box>
 
-                        {/* Right Column: Timings + Weather */}
+                        {/* Right Column */}
                         <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
-                            {/* Weekly Timings */}
+                            {/* Visiting Hours */}
                             <Box
                                 sx={{
                                     background: "linear-gradient(135deg, #e0f2fe, #fef3c7)",
@@ -169,7 +303,7 @@ export default function PlaceDetails() {
                                     variant="h6"
                                     sx={{ color: "#1d4ed8", mb: 2, fontWeight: 600 }}
                                 >
-                                    🕒 Visiting Hours (Weekly)
+                                    {display.visitingHoursLabel || "🕒 Visiting Hours (Weekly)"}
                                 </Typography>
 
                                 <Box
@@ -179,43 +313,44 @@ export default function PlaceDetails() {
                                         gap: 1.5,
                                     }}
                                 >
-                                    {Object.entries(place.time || {}).map(([day, time]) => (
-                                        <Box
-                                            key={day}
-                                            sx={{
-                                                backgroundColor: "#ffffffcc",
-                                                borderRadius: "12px",
-                                                p: 1.5,
-                                                textAlign: "center",
-                                                transition: "0.3s",
-                                                "&:hover": {
-                                                    backgroundColor: "#bfdbfe",
-                                                    transform: "scale(1.03)",
-                                                },
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="subtitle1"
+                                    {Object.entries(display.translatedTime || display.time || {}).map(
+                                        ([day, time]) => (
+                                            <Box
+                                                key={day}
                                                 sx={{
-                                                    color: "#1e40af",
-                                                    fontWeight: "bold",
-                                                    textTransform: "capitalize",
+                                                    backgroundColor: "#ffffffcc",
+                                                    borderRadius: "12px",
+                                                    p: 1.5,
+                                                    textAlign: "center",
+                                                    "&:hover": {
+                                                        backgroundColor: "#bfdbfe",
+                                                        transform: "scale(1.03)",
+                                                    },
                                                 }}
                                             >
-                                                {day}
-                                            </Typography>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{ color: "#111827", fontSize: "0.95rem" }}
-                                            >
-                                                {time}
-                                            </Typography>
-                                        </Box>
-                                    ))}
+                                                <Typography
+                                                    variant="subtitle1"
+                                                    sx={{
+                                                        color: "#1e40af",
+                                                        fontWeight: "bold",
+                                                        textTransform: "capitalize",
+                                                    }}
+                                                >
+                                                    {day}
+                                                </Typography>
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{ color: "#111827", fontSize: "0.95rem" }}
+                                                >
+                                                    {time}
+                                                </Typography>
+                                            </Box>
+                                        )
+                                    )}
                                 </Box>
                             </Box>
 
-                            {/* Weather Section */}
+                            {/* Weather */}
                             {weather && (
                                 <Box
                                     sx={{
@@ -230,7 +365,7 @@ export default function PlaceDetails() {
                                         variant="h6"
                                         sx={{ color: "#1e3a8a", mb: 2, fontWeight: 600 }}
                                     >
-                                        🌦️ Current Weather
+                                        {display.weatherLabel || "🌦️ Current Weather"}
                                     </Typography>
 
                                     <Box
@@ -241,16 +376,14 @@ export default function PlaceDetails() {
                                             justifyContent: "center",
                                         }}
                                     >
-                                        {getWeatherIcon(weather.weather?.[0]?.main)}
+                                        {getWeatherIcon(
+                                            display.translatedWeather?.main || weather.weather?.[0]?.main
+                                        )}
                                         <Typography
                                             variant="h5"
-                                            sx={{
-                                                mt: 1,
-                                                color: "#1e40af",
-                                                fontWeight: "bold",
-                                            }}
+                                            sx={{ mt: 1, color: "#1e40af", fontWeight: "bold" }}
                                         >
-                                            {weather.main.temp.toFixed(1)}°C
+                                            {localizeNumber(weather.main.temp.toFixed(1))}°C
                                         </Typography>
                                         <Typography
                                             variant="body1"
@@ -260,13 +393,15 @@ export default function PlaceDetails() {
                                                 textTransform: "capitalize",
                                             }}
                                         >
-                                            {weather.weather?.[0]?.description}
+                                            {display.translatedWeather?.description ||
+                                                weather.weather?.[0]?.description}
                                         </Typography>
-                                        <Typography
-                                            variant="body2"
-                                            sx={{ color: "#6b7280", mt: 1 }}
-                                        >
-                                            Humidity: {weather.main.humidity}% | Wind: {weather.wind.speed} m/s
+                                        <Typography variant="body2" sx={{ color: "#6b7280", mt: 1 }}>
+                                            {`${display.humidityLabel || "Humidity"}: ${localizeNumber(
+                                                weather.main.humidity
+                                            )}% | ${display.windLabel || "Wind"}: ${localizeNumber(
+                                                weather.wind.speed
+                                            )} m/s`}
                                         </Typography>
                                     </Box>
                                 </Box>

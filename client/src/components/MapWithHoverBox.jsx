@@ -2,10 +2,30 @@ import React, { useState, useEffect, useRef } from "react";
 import { useMap, Marker } from "react-leaflet";
 import L from "leaflet";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import {
+    startTranslating,
+    stopTranslating,
+} from "../store/translationSlice/translationSlice";
+import axios from "axios";
 
-function HoverInfoBox({ destination, map, onMouseEnter, onMouseLeave }) {
+const translateText = async (text, targetLang) => {
+    try {
+        const res = await axios.get("http://localhost:5001/api/translate", {
+            params: {
+                q: text,
+                targetLang: targetLang,
+            },
+        });
+        return res.data.translatedText;
+    } catch (err) {
+        console.error("Translation error:", err);
+        return text;
+    }
+};
+
+function HoverInfoBox({ destination, map, onMouseEnter, onMouseLeave, translatedLabels }) {
     const navigate = useNavigate();
-    console.log(destination)
     const [position, setPosition] = useState(null);
 
     useEffect(() => {
@@ -16,10 +36,9 @@ function HoverInfoBox({ destination, map, onMouseEnter, onMouseLeave }) {
 
     if (!position) return null;
 
-
     // 🕒 Today’s visiting time
     const today = new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
-    const todayTime = destination?.time?.[today] || "Not available";
+    const todayTime = destination?.time?.[today] || translatedLabels.notAvailable;
 
     return (
         <div
@@ -68,12 +87,11 @@ function HoverInfoBox({ destination, map, onMouseEnter, onMouseLeave }) {
             )}
             {destination.time && (
                 <p style={{ fontSize: "13px", color: "#666", marginBottom: "8px" }}>
-                    🕒 Today: <b>{todayTime}</b>
+                    🕒 {translatedLabels.today}: <b>{todayTime}</b>
                 </p>
             )}
             <button
                 onClick={() => navigate(`/place/${destination.id || destination._id}`)}
-                // onClick={() => console.log(destination)}
                 style={{
                     background: "#2563eb",
                     color: "white",
@@ -85,18 +103,92 @@ function HoverInfoBox({ destination, map, onMouseEnter, onMouseLeave }) {
                     fontSize: "14px",
                 }}
             >
-                View More
+                {translatedLabels.viewMore}
             </button>
         </div>
     );
 }
 
 export default function MapWithHoverBoxes({ destinations = [], selectedStart }) {
-    if (!destinations || !selectedStart) return;
     const map = useMap();
     const [hoveredDestination, setHoveredDestination] = useState(null);
     const [isHoveringBox, setIsHoveringBox] = useState(false);
     const hoverTimeoutRef = useRef(null);
+
+    const language = useSelector((state) => state.language.selectedLanguage);
+    const dispatch = useDispatch();
+
+    const [translatedDestinations, setTranslatedDestinations] = useState(destinations);
+    const [translatedLabels, setTranslatedLabels] = useState({
+        today: "Today",
+        notAvailable: "Not available",
+        viewMore: "View More",
+    });
+
+    // 🌐 Translate static UI labels
+    useEffect(() => {
+        const translateLabels = async () => {
+            if (language === "en") {
+                setTranslatedLabels({
+                    today: "Today",
+                    notAvailable: "Not available",
+                    viewMore: "View More",
+                });
+                return;
+            }
+            try {
+                dispatch(startTranslating());
+                const joined = "Today||Not available||View More";
+                const translated = await translateText(joined, language);
+                const [t1, t2, t3] = translated.split("||");
+                setTranslatedLabels({
+                    today: t1 || "Today",
+                    notAvailable: t2 || "Not available",
+                    viewMore: t3 || "View More",
+                });
+            } catch (err) {
+                console.error("Label translation failed:", err);
+            } finally {
+                dispatch(stopTranslating());
+            }
+        };
+        translateLabels();
+    }, [language, dispatch]);
+
+    // 🌍 Translate destination names + descriptions
+    useEffect(() => {
+        const translateDestinations = async () => {
+            if (!destinations || !destinations.length) return;
+
+            if (language === "en") {
+                setTranslatedDestinations(destinations);
+                return;
+            }
+
+            try {
+                dispatch(startTranslating());
+                const translated = await Promise.all(
+                    destinations.map(async (d) => {
+                        const text = `${d.name}||${d.description || ""}`;
+                        const res = await translateText(text, language);
+                        const [tName, tDesc] = res.split("||");
+                        return {
+                            ...d,
+                            name: tName || d.name,
+                            description: tDesc || d.description,
+                        };
+                    })
+                );
+                setTranslatedDestinations(translated);
+            } catch (err) {
+                console.error("Destination translation failed:", err);
+                setTranslatedDestinations(destinations);
+            } finally {
+                dispatch(stopTranslating());
+            }
+        };
+        translateDestinations();
+    }, [language, destinations, dispatch]);
 
     const handleMarkerMouseOver = (dest) => {
         clearTimeout(hoverTimeoutRef.current);
@@ -123,8 +215,7 @@ export default function MapWithHoverBoxes({ destinations = [], selectedStart }) 
 
     return (
         <>
-            {/* Destinations */}
-            {destinations.map((dest) => (
+            {translatedDestinations?.map((dest) => (
                 <Marker
                     key={dest._id}
                     position={[dest.lat, dest.lng]}
@@ -139,7 +230,6 @@ export default function MapWithHoverBoxes({ destinations = [], selectedStart }) 
                 />
             ))}
 
-            {/* Start Stop Marker (Red) */}
             {selectedStart && selectedStart.location?.coordinates && (
                 <Marker
                     key={selectedStart.id}
@@ -152,10 +242,7 @@ export default function MapWithHoverBoxes({ destinations = [], selectedStart }) 
                         iconSize: [30, 30],
                     })}
                     eventHandlers={{
-                        mouseover: () =>
-                            handleMarkerMouseOver({
-                                selectedStart
-                            }),
+                        mouseover: () => handleMarkerMouseOver(selectedStart),
                         mouseout: handleMarkerMouseOut,
                     }}
                 />
@@ -167,6 +254,7 @@ export default function MapWithHoverBoxes({ destinations = [], selectedStart }) 
                     map={map}
                     onMouseEnter={handleBoxEnter}
                     onMouseLeave={handleBoxLeave}
+                    translatedLabels={translatedLabels}
                 />
             )}
         </>

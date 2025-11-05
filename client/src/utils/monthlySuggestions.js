@@ -1,14 +1,15 @@
+// utils/monthlyPackageSuggestions.js
 export const monthlySuggestions = {
-    0: "This month, visit Ghats and Temples!", 
-    1: "Explore Museums and Monuments in February!",
-    2: "March is perfect for Gardens and Nature Spots.",
-    3: "Enjoy Gardens and Parks in April!",
-    4: "May is ideal for Ghats and Cultural Festivals.",
-    5: "Discover Ghats and Historical Monuments in June.",
-    6: "July is perfect for Temples and Museums.",
-    7: "Cultural Centers and Monuments await in August.",
-    8: "September is great for Gardens and Festivals.",
-    9: "Visit Museums and Historical Sites this October.",
-    10: "Ghats and Temples are perfect in November.",
-    11: "Festivals and Cultural Tours await in December!"
+    0: "Ideal time for religious and cultural visits like Triveni Sangam and Kumbh Mela sites.",
+    1: "Perfect for exploring historical and outdoor places due to pleasant weather.",
+    2: "Great month for heritage walks and temple tours before the heat sets in.",
+    3: "Best for early-morning river tours and shaded sightseeing locations.",
+    4: "Summer begins — prefer indoor attractions like museums and art galleries.",
+    5: "Hot weather — ideal for spiritual meditation centers and shaded gardens.",
+    6: "Monsoon starts — enjoy lush greenery and waterfalls around Prayagraj.",
+    7: "Continue exploring nature and serene spots during the rains.",
+    8: "Best for visiting ghats, temples, and riverside walks after monsoon.",
+    9: "Festive season — perfect for cultural tours and local fairs.",
+    10: "Cool climate returns — ideal for full-day outdoor sightseeing.",
+    11: "Peak tourist season — explore all major attractions comfortably.",
 };
