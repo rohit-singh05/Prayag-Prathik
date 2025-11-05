@@ -254,7 +254,7 @@ export default function ExplorePage() {
   }, [selectedStart, allSpots]);
 
   const handleFindPath = async () => {
-    if (!userLocation || !selectedDestination) return;
+    if (!userLocation && !selectedDestination && !selectedStart) return;
     setPathLoading(true);
     setIsPathSidebarOpen(true);
     setIsFetchingPath(true);
@@ -276,8 +276,8 @@ export default function ExplorePage() {
       const res = await axios.post(
         "http://localhost:5001/api/routes/calculate",
         {
-          startLat: userLocation.lat,
-          startLng: userLocation.lng,
+          startLat: userLocation ? userLocation.lat : selectedStart.lat,
+          startLng: userLocation ? userLocation.lng : selectedStart.lng,
           destinations: destinationsPayload,
         }
       );
@@ -303,106 +303,177 @@ export default function ExplorePage() {
     }
   };
 
-  const handleUseCurrentLocation = () => {
-    if (navigator.geolocation) {
-      setIsFetchingLocation(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation({ lat: latitude, lng: longitude });
-          setSelectedStart("current-location");
-          setDialogMessage(texts.currentLocationSet);
-          setDialogOpen(true);
-          setIsFetchingLocation(false);
-          setTimeout(() => setDialogOpen(false), 1000);
-        },
-        (error) => {
-          console.error("Geolocation error:", error);
-          setDialogMessage("Unable to fetch location.");
-          setDialogOpen(true);
-          setIsFetchingLocation(false);
-          setTimeout(() => setDialogOpen(false), 1000);
-        }
+  const handleUseCurrentLocation = async () => {
+    const prayagrajCenter = { lat: 25.4358, lng: 81.8463 };
+
+    // Helper: Haversine distance in km
+    const getDistanceKm = (lat1, lon1, lat2, lon2) => {
+      const R = 6371; // Earth's radius in km
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    };
+
+    // Wrap geolocation in a Promise for async/await
+    const getCurrentPositionAsync = () => {
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+    };
+
+    setIsFetchingLocation(true);
+
+    try {
+      if (!navigator.geolocation) {
+        throw new Error("Geolocation is not supported by your browser.");
+      }
+
+      const position = await getCurrentPositionAsync();
+      const { latitude, longitude } = position.coords;
+
+      console.log("📍 ExplorePage => Current Position", position);
+
+      // Check distance from Prayagraj center
+      const distance = getDistanceKm(
+        latitude,
+        longitude,
+        prayagrajCenter.lat,
+        prayagrajCenter.lng
       );
-    } else {
-      setDialogMessage("Geolocation is not supported.");
+
+      if (distance > 50) {
+        // ❌ Too far from Prayagraj
+        setDialogMessage(
+          `You are ${distance.toFixed(
+            1
+          )} km away from Prayagraj — please select a nearby location.`
+        );
+        setDialogOpen(true);
+        setTimeout(() => setDialogOpen(false), 2000);
+        setIsFetchingLocation(false);
+        return;
+      }
+
+      // ✅ Within acceptable range
+      const currentLoc = {
+        lat: latitude,
+        lng: longitude,
+        name: "Current Location",
+      };
+      setUserLocation(currentLoc);
+      setSelectedStart(currentLoc);
+
+      setDialogMessage(texts.currentLocationSet);
       setDialogOpen(true);
       setTimeout(() => setDialogOpen(false), 1000);
+    } catch (error) {
+      console.error("⚠️ Geolocation error:", error);
+      setDialogMessage(
+        error.message === "User denied Geolocation"
+          ? "Permission denied. Please enable location access."
+          : "Unable to fetch location."
+      );
+      setDialogOpen(true);
+      setTimeout(() => setDialogOpen(false), 2000);
+    } finally {
+      setIsFetchingLocation(false);
     }
   };
 
+
+
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-indigo-50 via-white to-amber-50 font-sans relative">
-      <div className="absolute top-4 right-4 z-[1000]">
-        <select
-          value={language}
-          onChange={(e) => dispatch(setLanguage(e.target.value))}
-          className="border border-gray-300 rounded px-2 py-1 text-sm bg-white"
-        >
-          <option value="en">English</option>
-          <option value="hi">Hindi</option>
-          <option value="bn">Bengali</option>
-          <option value="te">Telugu</option>
-          <option value="mr">Marathi</option>
-          <option value="ta">Tamil</option>
-          <option value="ur">Urdu</option>
-          <option value="gu">Gujarati</option>
-          <option value="kn">Kannada</option>
-          <option value="or">Odia</option>
-          <option value="pa">Punjabi</option>
-          <option value="ml">Malayalam</option>
-        </select>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-amber-50 font-sans relative flex flex-col">
+      {/* 🌐 Navbar - Always at the top */}
+      <div className="sticky top-0 bg-white/70 backdrop-blur-md shadow-md rounded-b-xl z-[900] flex flex-col sm:flex-row items-center justify-between px-6 py-3">
+        <Typography variant="h6" className="text-emerald-700 font-semibold mb-2 sm:mb-0">
+          Plan Your Visit
+        </Typography>
 
-      <DestinationSidebar
-        isSidebarOpen={isSidebarOpen}
-        predefinedDestinations={touristSpots}
-        predefinedStarts={allSpots}
-        selectedDestination={selectedDestination}
-        setSelectedDestination={setSelectedDestination}
-        selectedStart={selectedStart}
-        setSelectedStart={setSelectedStart}
-        handleFindPath={handleFindPath}
-        handleUseCurrentLocation={handleUseCurrentLocation}
-        userLocation={userLocation}
-        pathLoading={pathLoading}
-      />
-
-      <div className={`absolute bottom-4 z-[1000] transition-all duration-300`}>
-        <Tooltip title={isSidebarOpen ? texts.closeSidebar : texts.openSidebar}>
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className={`bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg rounded-full w-12 h-12 flex items-center justify-center transition-all duration-300 absolute bottom-0 ${isSidebarOpen
-              ? "left-[23rem] -translate-x-6"
-              : "left-0 translate-x-6"
-              }`}
+        <div className="flex items-center gap-2">
+          <label className="text-gray-700 font-medium text-sm hidden sm:inline">
+            Language:
+          </label>
+          <select
+            value={language}
+            onChange={(e) => dispatch(setLanguage(e.target.value))}
+            className="border border-gray-300 rounded-lg px-3 py-1 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
           >
-            {isSidebarOpen ? <CloseIcon /> : <MenuIcon />}
-          </button>
-        </Tooltip>
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="bn">Bengali</option>
+            <option value="te">Telugu</option>
+            <option value="mr">Marathi</option>
+            <option value="ta">Tamil</option>
+            <option value="ur">Urdu</option>
+            <option value="gu">Gujarati</option>
+            <option value="kn">Kannada</option>
+            <option value="or">Odia</option>
+            <option value="pa">Punjabi</option>
+            <option value="ml">Malayalam</option>
+          </select>
+        </div>
       </div>
 
-      <main className="flex-1 relative transition-all duration-500 z-0">
-        <MapView
+      {/* 🌍 Main Content Area below navbar */}
+      <div className="flex flex-1">
+        <DestinationSidebar
+          isSidebarOpen={isSidebarOpen}
+          predefinedDestinations={touristSpots}
+          predefinedStarts={allSpots}
+          selectedDestination={selectedDestination}
+          setSelectedDestination={setSelectedDestination}
+          selectedStart={selectedStart}
+          setSelectedStart={setSelectedStart}
+          handleFindPath={handleFindPath}
+          handleUseCurrentLocation={handleUseCurrentLocation}
           userLocation={userLocation}
-          destinations={selectedDestination}
+          pathLoading={pathLoading}
+        />
+
+        <div className={`absolute bottom-4 z-[1000] transition-all duration-300`}>
+          <Tooltip title={isSidebarOpen ? texts.closeSidebar : texts.openSidebar}>
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg rounded-full w-12 h-12 flex items-center justify-center transition-all duration-300 absolute bottom-0 ${isSidebarOpen
+                ? "left-[23rem] -translate-x-6"
+                : "left-0 translate-x-6"
+                }`}
+            >
+              {isSidebarOpen ? <CloseIcon /> : <MenuIcon />}
+            </button>
+          </Tooltip>
+        </div>
+
+        <main className="flex-1 relative transition-all duration-500 z-0">
+          <MapView
+            userLocation={userLocation}
+            destinations={selectedDestination}
+            activeStep={activeStep}
+            setActiveStep={setActiveStep}
+            zoomLevel={zoomLevel}
+            routes={routes}
+            selectedStart={selectedStart}
+          />
+        </main>
+
+        <RoutesSidebar
+          isOpen={isPathSidebarOpen}
+          setIsOpen={setIsPathSidebarOpen}
+          routes={routes}
           activeStep={activeStep}
           setActiveStep={setActiveStep}
-          zoomLevel={zoomLevel}
-          routes={routes}
           selectedStart={selectedStart}
         />
-      </main>
+      </div>
 
-      <RoutesSidebar
-        isOpen={isPathSidebarOpen}
-        setIsOpen={setIsPathSidebarOpen}
-        routes={routes}
-        activeStep={activeStep}
-        setActiveStep={setActiveStep}
-        selectedStart={selectedStart}
-      />
-
+      {/* 🗨️ Dialogs and Loaders */}
       <Dialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}

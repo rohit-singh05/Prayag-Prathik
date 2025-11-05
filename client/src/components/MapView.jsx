@@ -25,8 +25,12 @@ export default function MapView({
 
   useEffect(() => {
     const fetchAllSegments = async () => {
-      if (!routes || routes.length === 0 || !userLocation) {
-        setRouteSegments([]);
+      if (
+        !routes ||
+        routes.length === 0 ||
+        (!userLocation && !selectedStart)
+      ) {
+        setRouteSegments([]); // Clear paths when no valid data
         return;
       }
 
@@ -61,6 +65,7 @@ export default function MapView({
           const coords = geoJson.features[0].geometry.coordinates.map(
             ([lng, lat]) => [lat, lng]
           );
+
           segments.push({
             coords,
             fromName: step.travel.from.name,
@@ -75,8 +80,12 @@ export default function MapView({
       setRouteSegments(segments);
     };
 
+    // 🧹 Clear routes whenever destinations or start changes
+    setRouteSegments([]);
+
     fetchAllSegments();
-  }, [routes, userLocation]);
+  }, [routes, userLocation, selectedStart, destinations]);
+
 
   const hasPath = routes && routes.length > 0;
   const startStop = hasPath ? routes[0].startStop : null;
@@ -90,7 +99,7 @@ export default function MapView({
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
       {/* Show selected start if path not found */}
-      {!hasPath && selectedStart && (
+      {selectedStart && (
         <Marker
           position={[selectedStart.lat, selectedStart.lng]}
           icon={L.icon({
@@ -166,7 +175,7 @@ export default function MapView({
         })}
 
       <MapWithHoverBoxes destinations={destinations}
-      selectedStart={selectedStart}/>
+        selectedStart={selectedStart} />
     </MapContainer>
   );
 }

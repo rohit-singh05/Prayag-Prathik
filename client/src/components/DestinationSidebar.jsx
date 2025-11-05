@@ -147,11 +147,12 @@ export default function DestinationSidebar({
 
   return (
     <aside
-      className={`fixed z-40 top-0 left-0 h-full w-80
-            bg-white/95 backdrop-blur-lg border-r border-emerald-200 shadow-xl
-            transform transition-all duration-300 ease-in-out
-            ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-            flex flex-col`}
+      className={`fixed z-30 left-0 top-[3.5rem]   
+    h-[calc(100vh-3.5rem)]                    
+    w-80 bg-white/95 backdrop-blur-lg border-r border-emerald-200 shadow-xl
+    transform transition-all duration-300 ease-in-out
+    ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+    flex flex-col overflow-hidden`}           /* hide extra overflow */
     >
       <div className="px-6 py-5 border-b border-emerald-200 bg-gradient-to-r from-emerald-600 to-teal-500 shadow-sm">
         <h1 className="text-xl font-bold text-white tracking-wide">
@@ -162,7 +163,7 @@ export default function DestinationSidebar({
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-8 text-sm text-neutral-800">
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-8 text-sm text-neutral-800 scrollbar-thin scrollbar-thumb-emerald-400 scrollbar-track-neutral-100">
         <div className="flex flex-col">
           <div
             className="flex items-center justify-between cursor-pointer select-none mb-3"
@@ -180,11 +181,10 @@ export default function DestinationSidebar({
 
           <div
             className={`transition-all duration-300 ease-in-out overflow-hidden
-                            ${
-                              isDestinationsOpen
-                                ? "max-h-[400px] opacity-100"
-                                : "max-h-0 opacity-0"
-                            }`}
+                            ${isDestinationsOpen
+                ? "max-h-[400px] opacity-100"
+                : "max-h-0 opacity-0"
+              }`}
           >
             <div className="sticky top-0 bg-white/95 pb-3 z-10">
               <div className="relative">
@@ -209,18 +209,17 @@ export default function DestinationSidebar({
                     <div
                       key={dest.id}
                       className={`flex items-center gap-3 px-3 py-3 rounded-xl border shadow-sm transition cursor-pointer
-                                            ${
-                                              Array.isArray(
-                                                selectedDestination
-                                              ) &&
-                                              selectedDestination.some(
-                                                (d) =>
-                                                  d.lat === dest.lat &&
-                                                  d.lng === dest.lng
-                                              )
-                                                ? "bg-emerald-50 border-emerald-300"
-                                                : "bg-white hover:bg-neutral-50 border-neutral-200"
-                                            }`}
+                                            ${Array.isArray(
+                        selectedDestination
+                      ) &&
+                          selectedDestination.some(
+                            (d) =>
+                              d.lat === dest.lat &&
+                              d.lng === dest.lng
+                          )
+                          ? "bg-emerald-50 border-emerald-300"
+                          : "bg-white hover:bg-neutral-50 border-neutral-200"
+                        }`}
                       onClick={() => {
                         if (
                           Array.isArray(selectedDestination) &&
@@ -395,13 +394,8 @@ export default function DestinationSidebar({
       <div className="px-5 py-4 border-t border-neutral-200 bg-white">
         <button
           onClick={handleFindPath}
-          disabled={!selectedDestination || !userLocation || pathLoading}
-          className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-200
-                        ${
-                          selectedDestination && userLocation && !pathLoading
-                            ? "bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg"
-                            : "bg-neutral-200 text-neutral-500 cursor-not-allowed"
-                        }`}
+          className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-200 bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg"
+            }`}
         >
           {pathLoading ? `${texts.findingPath}` : `🌿 ${texts.findPath}`}
         </button>
