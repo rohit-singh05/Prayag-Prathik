@@ -37,45 +37,45 @@ export default function MapView({
       const route = routes[0];
       const segments = [];
 
-      for (const [idx, step] of route.plan.entries()) {
-        try {
-          const apiKey =
-            "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImMzYTcxMTI5YTdiNzRiNmNiMmZmYTUyZTYxMzJiNTlhIiwiaCI6Im11cm11cjY0In0=";
-          const from = step.travel.from.location.coordinates;
-          const to = step.travel.to.location.coordinates;
+      // for (const [idx, step] of route.plan.entries()) {
+      //   try {
+      //     const apiKey =
+      //       "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImMzYTcxMTI5YTdiNzRiNmNiMmZmYTUyZTYxMzJiNTlhIiwiaCI6Im11cm11cjY0In0=";
+      //     const from = step.travel.from.location.coordinates;
+      //     const to = step.travel.to.location.coordinates;
 
-          const postUrl =
-            "https://api.openrouteservice.org/v2/directions/driving-car/geojson";
-          const body = {
-            coordinates: [
-              [from[0], from[1]],
-              [to[0], to[1]],
-            ],
-            instructions: false,
-          };
+      //     const postUrl =
+      //       "https://api.openrouteservice.org/v2/directions/driving-car/geojson";
+      //     const body = {
+      //       coordinates: [
+      //         [from[0], from[1]],
+      //         [to[0], to[1]],
+      //       ],
+      //       instructions: false,
+      //     };
 
-          const response = await axios.post(postUrl, body, {
-            headers: {
-              Authorization: apiKey,
-              "Content-Type": "application/json",
-            },
-          });
+      //     const response = await axios.post(postUrl, body, {
+      //       headers: {
+      //         Authorization: apiKey,
+      //         "Content-Type": "application/json",
+      //       },
+      //     });
 
-          const geoJson = response.data;
-          const coords = geoJson.features[0].geometry.coordinates.map(
-            ([lng, lat]) => [lat, lng]
-          );
+      //     const geoJson = response.data;
+      //     const coords = geoJson.features[0].geometry.coordinates.map(
+      //       ([lng, lat]) => [lat, lng]
+      //     );
 
-          segments.push({
-            coords,
-            fromName: step.travel.from.name,
-            toName: step.travel.to.name,
-            index: idx,
-          });
-        } catch (error) {
-          console.error("Error fetching segment:", error);
-        }
-      }
+      //     segments.push({
+      //       coords,
+      //       fromName: step.travel.from.name,
+      //       toName: step.travel.to.name,
+      //       index: idx,
+      //     });
+      //   } catch (error) {
+      //     console.error("Error fetching segment:", error);
+      //   }
+      // }
 
       setRouteSegments(segments);
     };
@@ -99,7 +99,7 @@ export default function MapView({
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
       {/* Show selected start if path not found */}
-      {selectedStart && (
+      {selectedStart && selectedStart !== "current-location" && (
         <Marker
           position={[selectedStart.lat, selectedStart.lng]}
           icon={L.icon({

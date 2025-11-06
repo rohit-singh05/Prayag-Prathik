@@ -87,8 +87,8 @@ export default function DestinationSidebar({
           startHere: "Start Here",
           savedSpots: "Saved Spots",
           useCurrent: "Use Current Location",
-          findingPath: "Finding Path...",
-          findPath: "Find Path",
+          makingSchedule: "Making Schedule...",
+          makeSchedule: "Make Schedule",
           closeSidebar: "Close Destinations Sidebar",
           openSidebar: "Open Destinations Sidebar",
         });
@@ -104,8 +104,8 @@ export default function DestinationSidebar({
             { key: "startHere", text: "Start Here" },
             { key: "savedSpots", text: "Saved Spots" },
             { key: "useCurrent", text: "Use Current Location" },
-            { key: "findingPath", text: "Finding Path..." },
-            { key: "findPath", text: "Find Path" },
+            { key: "makingSchedule", text: "Making Schedule..." },
+            { key: "makeSchedule", text: "Make Schedule" },
             { key: "closeSidebar", text: "Close Destinations Sidebar" },
             { key: "openSidebar", text: "Open Destinations Sidebar" },
           ];
@@ -131,8 +131,8 @@ export default function DestinationSidebar({
             startHere: "Start Here",
             savedSpots: "Saved Spots",
             useCurrent: "Use Current Location",
-            findingPath: "Finding Path...",
-            findPath: "Find Path",
+            makingSchedule: "Make Schedule...",
+            makeSchedule: "Make Schedule",
             closeSidebar: "Close Destinations Sidebar",
             openSidebar: "Open Destinations Sidebar",
           });
@@ -397,7 +397,7 @@ export default function DestinationSidebar({
           className={`w-full py-3 rounded-lg font-medium text-sm transition-all duration-200 bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg"
             }`}
         >
-          {pathLoading ? `${texts.findingPath}` : `🌿 ${texts.findPath}`}
+          {pathLoading ? `${texts.makingSchedule}` : `🌿 ${texts.makeSchedule}`}
         </button>
       </div>
     </aside>

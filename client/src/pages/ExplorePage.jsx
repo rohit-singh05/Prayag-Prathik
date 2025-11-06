@@ -367,7 +367,7 @@ export default function ExplorePage() {
         name: "Current Location",
       };
       setUserLocation(currentLoc);
-      setSelectedStart(currentLoc);
+      setSelectedStart("current-location");
 
       setDialogMessage(texts.currentLocationSet);
       setDialogOpen(true);
