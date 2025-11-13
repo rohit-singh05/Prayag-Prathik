@@ -46,6 +46,10 @@ const PackagesPage = () => {
     const [translatedPackages, setTranslatedPackages] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+
+
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [monthSuggestion, setMonthSuggestion] = useState("");
 
@@ -63,6 +67,14 @@ const PackagesPage = () => {
     useEffect(() => {
         setMonthSuggestion(monthlySuggestions[selectedMonth]);
     }, [selectedMonth]);
+
+    useEffect(() => {
+        if (startDate) {
+            const month = new Date(startDate).getMonth();
+            setSelectedMonth(month);
+        }
+    }, [startDate]);
+
 
     // ✅ Fetch all packages and separate them
     useEffect(() => {
@@ -270,36 +282,36 @@ const PackagesPage = () => {
                     {uiTexts.planVisit}
                 </Typography>
 
-                {/* Month Selector */}
-                <div className="flex items-center gap-3 mb-2 sm:mb-0">
-                    <label className="text-gray-700 font-medium text-sm">
-                        {uiTexts.visitingMonth}:
-                    </label>
-                    <select
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                        className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                    >
-                        {[
-                            "January",
-                            "February",
-                            "March",
-                            "April",
-                            "May",
-                            "June",
-                            "July",
-                            "August",
-                            "September",
-                            "October",
-                            "November",
-                            "December",
-                        ].map((month, idx) => (
-                            <option key={idx} value={idx}>
-                                {month}
-                            </option>
-                        ))}
-                    </select>
+                {/* Start Date + End Date */}
+                <div className="flex items-center gap-6 mb-2 sm:mb-0">
+
+                    {/* Starting Date */}
+                    <div className="flex items-center gap-3">
+                        <label className="text-gray-700 font-medium text-sm">
+                            Starting Date:
+                        </label>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                        />
+                    </div>
+
+                    {/* Ending Date */}
+                    <div className="flex items-center gap-3">
+                        <label className="text-gray-700 font-medium text-sm">
+                            Ending Date:
+                        </label>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                        />
+                    </div>
                 </div>
+
 
                 {/* Language Selector */}
                 <div className="flex items-center gap-2">
